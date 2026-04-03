@@ -42,8 +42,8 @@ class GzPlanarMove(Node):
         self.odom_topic = self.get_parameter("odom_topic").value
         self.odom_frame = self.get_parameter("odom_frame").value
         self.base_frame = self.get_parameter("base_frame").value
-        self.publish_odom = self.get_parameter("publish_odom").value
-        self.publish_odom_tf = self.get_parameter("publish_odom_tf").value
+        self.publish_odom_enabled = self.get_parameter("publish_odom").value
+        self.publish_odom_tf_enabled = self.get_parameter("publish_odom_tf").value
         self.update_rate = float(self.get_parameter("update_rate").value)
         self.cmd_vel_timeout = Duration(
             seconds=float(self.get_parameter("cmd_vel_timeout").value)
@@ -92,7 +92,7 @@ class GzPlanarMove(Node):
         self.yaw += cmd.angular.z * dt
 
         self.send_pose_request()
-        self.publish_odom(now, cmd)
+        self.publish_odom_message(now, cmd)
 
     def send_pose_request(self) -> None:
         if not self.set_pose_client.service_is_ready():
@@ -115,7 +115,7 @@ class GzPlanarMove(Node):
 
         self.pending_request = self.set_pose_client.call_async(request)
 
-    def publish_odom(self, now, cmd: Twist) -> None:
+    def publish_odom_message(self, now, cmd: Twist) -> None:
         quat = quaternion_from_yaw(self.yaw)
 
         odom = Odometry()
@@ -130,10 +130,10 @@ class GzPlanarMove(Node):
         odom.pose.pose.orientation.z = quat[2]
         odom.pose.pose.orientation.w = quat[3]
         odom.twist.twist = cmd
-        if self.publish_odom:
+        if self.publish_odom_enabled:
             self.odom_pub.publish(odom)
 
-        if not self.publish_odom_tf:
+        if not self.publish_odom_tf_enabled:
             return
 
         transform = TransformStamped()

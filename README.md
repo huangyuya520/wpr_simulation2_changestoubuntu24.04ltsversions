@@ -26,7 +26,7 @@ Youtube: [机器人操作系统 ROS2 入门教材](https://www.youtube.com/watch
 1. 获取源码:
 ```
 cd ~/ros2_ws/src/
-git clone https://github.com/6-robot/wpr_simulation2.git
+git clone https://github.com/huangyuya520/wpr_simulation2_changestoUbuntu24.04LTSversions.git
 ```
 2. 安装依赖项:  
 ROS2 Humble (Ubuntu 22.04)
