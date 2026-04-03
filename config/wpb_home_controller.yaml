@@ -11,11 +11,6 @@ controller_manager:
 
 manipulator_controller:
   ros__parameters:
-    command_interfaces:
-      - position
-      - velocity
-    state_interfaces:
-      - position
     joints:
       - mani_base
       - elbow_forearm
@@ -24,4 +19,3 @@ manipulator_controller:
       - palm_right_finger
       - right_finger_tip
     interface_name: position
-

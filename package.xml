@@ -15,16 +15,35 @@
   <depend>rclpy</depend>
   <depend>urdf</depend>
   <depend>angles</depend>
-  <depend>gazebo_dev</depend>
-  <depend>gazebo_ros</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
   <depend>controller_manager</depend>
   <depend>hardware_interface</depend>
   <depend>pluginlib</depend>
   <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
   <depend>joint_state_publisher</depend>
   <depend>robot_state_publisher</depend>
-  <depend>gazebo_ros_pkgs</depend>
+  <depend>image_transport</depend>
+  <depend>cv_bridge</depend>
+  <depend>pcl_conversions</depend>
+  <depend>pcl_ros</depend>
+  <depend>nav2_msgs</depend>
+  <depend>xacro</depend>
+  <depend>ros_gz_bridge</depend>
+  <depend>ros_gz_interfaces</depend>
+  <depend>ros_gz_sim</depend>
+  <depend>gz_ros2_control</depend>
   <depend>ros2launch</depend>
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>slam_toolbox</exec_depend>
+  <exec_depend>teleop_twist_keyboard</exec_depend>
+  <exec_depend>wp_map_tools</exec_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
   <member_of_group>rosidl_interface_packages</member_of_group>
@@ -33,6 +52,7 @@
   <test_depend>ament_lint_common</test_depend>
 
   <export>
+    <gazebo_ros gazebo_model_path="${prefix}/../" gazebo_media_path="${prefix}/../"/>
     <build_type>ament_cmake</build_type>
   </export>
 </package>

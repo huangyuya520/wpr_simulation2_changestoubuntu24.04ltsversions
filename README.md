@@ -12,14 +12,13 @@ Youtube: [机器人操作系统 ROS2 入门教材](https://www.youtube.com/watch
 ## 系统版本
 
 - ROS2 Humble (Ubuntu 22.04)
+- ROS2 Jazzy (Ubuntu 24.04，迁移中)
 
 ## 兼容性说明
 
-- 当前仓库按 Gazebo Classic 编写，直接依赖 `gazebo_ros_pkgs`、`gazebo_ros`、`gazebo_ros2_control`。
-- Ubuntu 24.04 + ROS2 Jazzy 默认使用的是新 Gazebo 技术栈，因此不能直接执行 `install_for_humble.sh` 来安装这些经典 Gazebo 依赖。
-- 如果你使用的是 Ubuntu 24.04 + ROS2 Jazzy，需要二选一：
-  1. 切换到 Ubuntu 22.04 + ROS2 Humble 后按本文步骤运行。
-  2. 将本仓库迁移到 `gz_sim` / `ros_gz` / `gz_ros2_control` 后再在 Jazzy 下编译。
+- Humble 路线继续使用 Gazebo Classic。
+- Jazzy 路线已经开始迁移到 `gz_sim` / `ros_gz` / `gz_ros2_control`。
+- 当前 Jazzy 迁移已完成构建适配，并迁移了主场景与一批常用 launch 文件；仍有部分旧模型文件保留 Classic 写法，主要作为历史资源保留。
 
 ## 使用说明
 
@@ -35,6 +34,11 @@ ROS2 Humble (Ubuntu 22.04)
 cd ~/ros2_ws/src/wpr_simulation2/scripts
 ./install_for_humble.sh
 ```
+ROS2 Jazzy (Ubuntu 24.04)
+```
+cd ~/ros2_ws/src/wpr_simulation2/scripts
+./install_for_jazzy.sh
+```
 3. 编译
 ```
 cd ~/ros2_ws
@@ -46,6 +50,24 @@ colcon build --symlink-install
 ros2 launch wpr_simulation2 wpb_simple.launch.py 
 ```
 ![wpb_simple pic](./media/wpb_simple.png)
+
+Jazzy 下当前已迁移的常用入口:
+```
+ros2 launch wpr_simulation2 wpb_simple.launch.py
+ros2 launch wpr_simulation2 wpb_mani.launch.py
+ros2 launch wpr_simulation2 robocup_home.launch.py
+ros2 launch wpr_simulation2 robocup_home_mani.launch.py
+ros2 launch wpr_simulation2 wpb_balls.launch.py
+ros2 launch wpr_simulation2 wpb_face.launch.py
+ros2 launch wpr_simulation2 wpb_objects.launch.py
+ros2 launch wpr_simulation2 wpb_table.launch.py
+```
+
+Jazzy 当前限制:
+- `spawn_wpb.launch.py`、`spawn_wpb_lidar.launch.py`、`spawn_wpb_head_up.launch.py` 目前是兼容性包装入口，底层统一复用已迁移的 `wpb_home_mani` 模型。
+- 原 Gazebo Classic 抓取修正类插件还没有完整迁移到新 Gazebo 系统插件。
+- 如果直接使用还未迁移的历史 `.model` 文件，仍可能遇到 `libgazebo_ros_*` 相关错误。
+- `map_tools.launch.py`、`navigation.launch.py`、`wpb_scene_1.launch.py` 还依赖 `nav2_bringup`，其中 `map_tools.launch.py` 和 `wpb_scene_1.launch.py` 还额外需要工作区中存在 `wp_map_tools` 包。
 
 SLAM环境地图创建:
 ```

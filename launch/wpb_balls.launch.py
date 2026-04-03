@@ -1,119 +1,135 @@
 #!/usr/bin/env python3
-#
-# Copyright 2023 6-robot.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# Authors: Zhang Wanjie
 
 import os
+
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
+
+
+def spawn_ball(entity_name, x, y):
+    return Node(
+        package="ros_gz_sim",
+        executable="create",
+        name=f"spawn_{entity_name}",
+        output="screen",
+        parameters=[
+            {
+                "world": "default",
+                "file": os.path.join(
+                    get_package_share_directory("wpr_simulation2"),
+                    "models",
+                    "balls",
+                    f"{entity_name}.model",
+                ),
+                "name": entity_name,
+                "allow_renaming": False,
+                "x": x,
+                "y": y,
+                "z": 0.0,
+                "Y": 0.0,
+            }
+        ],
+    )
+
+
+def ball_planar_move(entity_name, x, y):
+    return Node(
+        package="wpr_simulation2",
+        executable="gz_planar_move.py",
+        name=f"{entity_name}_planar_move",
+        output="screen",
+        parameters=[
+            {
+                "entity_name": entity_name,
+                "world_name": "default",
+                "cmd_vel_topic": f"/{entity_name}/cmd_vel",
+                "odom_topic": f"/{entity_name}/odom",
+                "publish_odom": False,
+                "publish_odom_tf": False,
+                "odom_frame": f"{entity_name}/odom",
+                "base_frame": f"{entity_name}/base_link",
+                "initial_x": x,
+                "initial_y": y,
+                "initial_z": 0.0,
+                "initial_yaw": 0.0,
+            }
+        ],
+    )
+
+
+def ball_random_move(entity_name):
+    return Node(
+        package="wpr_simulation2",
+        executable="ball_random_move",
+        name=f"{entity_name}_random_move",
+        output="screen",
+        arguments=[entity_name],
+    )
 
 
 def generate_launch_description():
-    launch_file_dir = os.path.join(get_package_share_directory('wpr_simulation2'), 'launch')
-    pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
-
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-
-    world = os.path.join(
-        get_package_share_directory('wpr_simulation2'),
-        'worlds',
-        'wpb_simple.world'
-    )
-
-    gzserver_cmd = IncludeLaunchDescription(
+    world = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(pkg_gazebo_ros, 'launch', 'gzserver.launch.py')
+            PathJoinSubstitution([FindPackageShare("wpr_simulation2"), "launch", "world.launch.py"])
         ),
-        launch_arguments={'world': world}.items()
+        launch_arguments={
+            "world": PathJoinSubstitution(
+                [FindPackageShare("wpr_simulation2"), "worlds", "wpb_simple.world"]
+            )
+        }.items(),
     )
 
-    gzclient_cmd = IncludeLaunchDescription(
+    spawn_robot = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
+            PathJoinSubstitution([FindPackageShare("wpr_simulation2"), "launch", "spawn_wpb.launch.py"])
         )
     )
 
-    spawn_robot_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(launch_file_dir, 'spawn_wpb.launch.py')
-        )
+    spawn_orange_ball = spawn_ball("orange_ball", 2.0, 0.0)
+    spawn_red_ball = spawn_ball("red_ball", 2.0, 0.5)
+    spawn_green_ball = spawn_ball("green_ball", 2.0, -0.5)
+    spawn_blue_ball = spawn_ball("blue_ball", 3.0, 0.0)
+
+    orange_planar_move = ball_planar_move("orange_ball", 2.0, 0.0)
+    red_planar_move = ball_planar_move("red_ball", 2.0, 0.5)
+    green_planar_move = ball_planar_move("green_ball", 2.0, -0.5)
+    blue_planar_move = ball_planar_move("blue_ball", 3.0, 0.0)
+
+    orange_random_move = ball_random_move("orange_ball")
+    red_random_move = ball_random_move("red_ball")
+    green_random_move = ball_random_move("green_ball")
+    blue_random_move = ball_random_move("blue_ball")
+
+    return LaunchDescription(
+        [
+            world,
+            spawn_robot,
+            TimerAction(
+                period=2.0,
+                actions=[
+                    spawn_orange_ball,
+                    spawn_red_ball,
+                    spawn_green_ball,
+                    spawn_blue_ball,
+                ],
+            ),
+            TimerAction(
+                period=3.0,
+                actions=[
+                    orange_planar_move,
+                    red_planar_move,
+                    green_planar_move,
+                    blue_planar_move,
+                    orange_random_move,
+                    red_random_move,
+                    green_random_move,
+                    blue_random_move,
+                ],
+            ),
+        ]
     )
-
-    spawn_orange_ball = Node(
-            package='gazebo_ros',
-            namespace='',
-            executable='spawn_entity.py',
-            name='spawn_entity',
-            arguments=['-file', [os.path.join(get_package_share_directory('wpr_simulation2'), 'models', 'balls', 'orange_ball.model')] , 
-            '-entity', 'orange_ball',
-            '-x', '2.0',
-            '-y', '0.0',
-            '-Y', '0']
-        )
-
-    spawn_red_ball = Node(
-            package='gazebo_ros',
-            namespace='',
-            executable='spawn_entity.py',
-            name='spawn_entity',
-            arguments=['-file', [os.path.join(get_package_share_directory('wpr_simulation2'), 'models', 'balls', 'red_ball.model')] , 
-            '-entity', 'red_ball',
-            '-x', '2.0',
-            '-y', '0.5',
-            '-Y', '0']
-        )
-    
-    spawn_green_ball = Node(
-            package='gazebo_ros',
-            namespace='',
-            executable='spawn_entity.py',
-            name='spawn_entity',
-            arguments=['-file', [os.path.join(get_package_share_directory('wpr_simulation2'), 'models', 'balls', 'green_ball.model')] , 
-            '-entity', 'green_ball',
-            '-x', '2.0',
-            '-y', '-0.5',
-            '-Y', '0']
-        )
-
-    spawn_blue_ball = Node(
-            package='gazebo_ros',
-            namespace='',
-            executable='spawn_entity.py',
-            name='spawn_entity',
-            arguments=['-file', [os.path.join(get_package_share_directory('wpr_simulation2'), 'models', 'balls', 'blue_ball.model')] , 
-            '-entity', 'blue_ball',
-            '-x', '3.0',
-            '-y', '0.0',
-            '-Y', '0']
-        )
-
-    ld = LaunchDescription()
-
-    # Add the commands to the launch description
-    ld.add_action(gzserver_cmd)
-    ld.add_action(gzclient_cmd)
-
-    ld.add_action(spawn_robot_cmd)
-    ld.add_action(spawn_orange_ball)
-    ld.add_action(spawn_red_ball)
-    ld.add_action(spawn_green_ball)
-    ld.add_action(spawn_blue_ball)
-
-    return ld

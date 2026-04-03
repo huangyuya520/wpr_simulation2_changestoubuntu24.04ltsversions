@@ -8,7 +8,6 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
-find_package(gazebo_ros_pkgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -17,6 +16,7 @@ find_package(rclcpp_action REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(image_transport REQUIRED)
@@ -32,15 +32,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "std_msgs"
 )
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
-
-link_directories(
-  ${GAZEBO_LIBRARY_DIRS}
-)
-
-include_directories(
-  include
-  ${GAZEBO_INCLUDE_DIRS}
-)
 
 add_executable(wpb_home_mani_sim src/wpb_home_mani_sim.cpp)
 ament_target_dependencies(wpb_home_mani_sim 
@@ -186,6 +177,7 @@ install(DIRECTORY config launch demo_launch worlds models meshes rviz src msg ma
 # Install Python executables
 install(PROGRAMS
   src/face_detector.py
+  src/gz_planar_move.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -207,7 +199,6 @@ install(
 )
 
 ament_export_include_directories(include)
-ament_export_dependencies(gazebo_ros_pkgs)
 ament_export_dependencies(geometry_msgs)
 ament_export_dependencies(nav_msgs)
 ament_export_dependencies(rclcpp)

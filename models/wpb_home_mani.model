@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
-<robot name="wpb_home_gazebo">
+<robot name="wpb_home_gazebo" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<xacro:arg name="controller_config" default="config/wpb_home_controller.yaml"/>
 
 <link name="base_footprint">
   <visual>
@@ -391,8 +393,9 @@
 
 <!-- Gazebo plugin for RpLidar A2 -->
 <gazebo reference="laser_link">
-  <sensor type="ray" name="laser_link">
+  <sensor type="gpu_lidar" name="laser_link">
     <pose>0 0 0.06 0 0 0</pose>
+    <topic>/scan</topic>
     <visualize>false</visualize>
     <update_rate>10</update_rate>
     <ray>
@@ -415,14 +418,6 @@
         <stddev>0.01</stddev>
       </noise>
     </ray>
-    <plugin name="gazebo_ros_laser_link_controller" filename="libgazebo_ros_ray_sensor.so">
-      <ros>
-        <namespace>/</namespace>
-        <remapping>~/out:=scan</remapping>
-      </ros>
-      <output_type>sensor_msgs/LaserScan</output_type>
-      <frame_name>laser_link</frame_name>
-    </plugin>
   </sensor>
 </gazebo>
 
@@ -515,15 +510,15 @@
 
 <!-- Gazebo plugin for Kinect v2 -->
 <gazebo reference="kinect2_head_frame">
-  <sensor type="depth" name="kinect2_depth_sensor" >
+  <sensor type="rgbd_camera" name="kinect2_depth_sensor" >
+    <topic>/kinect2/sd</topic>
     <always_on>true</always_on>
     <update_rate>10.0</update_rate>
     <camera name="kinect2_depth_sensor">
       <horizontal_fov>1.221730456</horizontal_fov>
       <image>
-          <width>512</width>
-          <height>424</height>
-          <format>B8G8R8</format>
+          <width>320</width>
+          <height>240</height>
       </image>
       <clip>
           <near>0.5</near>
@@ -535,25 +530,11 @@
           <stddev>0.07</stddev>
       </noise>
     </camera>
-    <plugin name="kinect2_depth_control" filename="libgazebo_ros_camera.so">
-        <ros>
-          <namespace>kinect2</namespace>
-          <remapping>custom_camera/image_raw:=image_color_rect</remapping>
-          <remapping>custom_camera/image_depth:=image_depth_rect</remapping>
-          <remapping>custom_camera/camera_info:=camera_info</remapping>
-          <remapping>custom_camera/camera_info_depth:=/depth_camera_info</remapping>
-          <remapping>custom_camera/points:=points</remapping>
-        </ros>
-        <camera_name>sd</camera_name>
-        <frame_name>kinect2_ir_optical_frame</frame_name>
-        <hack_baseline>0.1</hack_baseline>
-        <min_depth>0.001</min_depth>
-        <max_depth>300.0</max_depth>
-    </plugin>
   </sensor>
 </gazebo>
 <gazebo reference="kinect2_rgb_optical_frame">
     <sensor type="camera" name="kinect2_rgb_sensor">
+        <topic>/kinect2/hd/image_raw</topic>
         <always_on>true</always_on>
         <update_rate>20.0</update_rate>
         <camera name="hd">
@@ -573,22 +554,12 @@
               <stddev>0.007</stddev>
           </noise>
         </camera>
-        <plugin name="kinect2_rgb_controller" filename="libgazebo_ros_camera.so">
-          <ros>
-            <namespace>kinect2</namespace>
-            <remapping>image_raw:=image_color_rect</remapping>
-            <remapping>camera_info:=camera_info</remapping>
-          </ros>
-          <camera_name>hd</camera_name>
-          <frame_name>kinect2_rgb_optical_frame</frame_name>
-
-          <hack_baseline>0.1</hack_baseline>
-        </plugin>
     </sensor>
 </gazebo>
 
 <gazebo reference="kinect2_head_frame">
     <sensor type="camera" name="kinect2_qhd_rgb_sensor">
+        <topic>/kinect2/qhd/image_raw</topic>
         <always_on>true</always_on>
         <update_rate>20.0</update_rate>
         <camera name="qhd">
@@ -603,49 +574,14 @@
               <far>10.0</far>
           </clip>
         </camera>
-        <plugin name="kinect2_qhd_rgb_controller" filename="libgazebo_ros_camera.so">
-          <ros>
-            <namespace>kinect2</namespace>
-            <remapping>image_raw:=image_color_rect</remapping>
-            <remapping>camera_info:=camera_info</remapping>
-          </ros>
-          <camera_name>qhd</camera_name>
-          <frame_name>kinect2_head_frame</frame_name>
-
-          <hack_baseline>0.1</hack_baseline>
-        </plugin>
     </sensor>
 </gazebo>
-
-<!-- Gazebo plugin for mobile base -->
-<gazebo>
-  <plugin name="base_controller" filename="libgazebo_ros_planar_move.so">
-    <ros>
-      <!-- <namespace>/wpb</namespace> -->
-      <remapping>cmd_vel:=cmd_vel</remapping>
-      <remapping>odom:=odom</remapping>
-    </ros>
-    <!-- Set control loop update rate -->
-    <update_rate>100</update_rate>
-    <!-- Set odom publish rate -->
-    <publish_rate>20</publish_rate>
-    <!-- Set if odom required -->
-    <publish_odom>true</publish_odom>
-    <publish_odom_tf>true</publish_odom_tf>
-    <!-- Frame IDs -->
-    <odometry_frame>odom</odometry_frame>
-    <robot_base_frame>base_footprint</robot_base_frame>
-    <!-- Set odom covariance -->
-    <covariance_x>0.0001</covariance_x>
-    <covariance_y>0.0001</covariance_y>
-    <covariance_yaw>0.01</covariance_yaw>
-  </plugin>
-</gazebo> 
 
 <!-- Gazebo plugin for IMU -->
 <gazebo reference="body_link">
   <gravity>true</gravity>
   <sensor name="imu_sensor" type="imu">
+    <topic>/imu/data</topic>
     <always_on>true</always_on>
     <update_rate>100</update_rate>
     <imu>
@@ -690,20 +626,13 @@
         </z>
       </linear_acceleration>
     </imu>
-    <plugin name="wpb_imu" filename="libgazebo_ros_imu_sensor.so">
-      <ros>
-        <namespace>/</namespace>
-        <remapping>~/out:=imu/data</remapping>
-      </ros>
-      <frame_name>body_link</frame_name>
-    </plugin>
   </sensor>
 </gazebo>
 
   <!-- ros2_control plugin -->
   <ros2_control name="GazeboSimSystem" type="system">
     <hardware>
-      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
     </hardware>
     <joint name="mani_base">
         <command_interface name="position">
@@ -762,29 +691,13 @@
   </ros2_control>
 
   <gazebo>
-    <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
-      <parameters>$(find wpr_simulation2)/config/wpb_home_controller.yaml</parameters>
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(arg controller_config)</parameters>
     </plugin>
   </gazebo>
 
   <gazebo>
-   <plugin name="gazebo_grasp_fix" filename="libgazebo_grasp_fix.so">
-        <arm>
-           <arm_name>wpb_home_arm</arm_name>
-           <palm_link> elbow_forearm  </palm_link>
-           <gripper_link> elbow_forearm </gripper_link>
-           <gripper_link> palm_left_finger </gripper_link>
-           <gripper_link> left_finger_tip </gripper_link>
-           <gripper_link> palm_right_finger </gripper_link>
-           <gripper_link> right_finger_tip </gripper_link>
-        </arm>
-       <forces_angle_tolerance>150</forces_angle_tolerance>
-       <update_rate>4</update_rate>
-       <grip_count_threshold>4</grip_count_threshold>
-       <max_grip_count>8</max_grip_count>
-       <release_tolerance>0.005</release_tolerance>
-       <disable_collisions_on_attach>true</disable_collisions_on_attach>
-       <contact_topic>__default_topic__</contact_topic>
+   <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu">
     </plugin>
 </gazebo>
   
