@@ -45,6 +45,36 @@ cd ~/ros2_ws
 colcon build --symlink-install
 ```
 
+当前默认构建策略:
+- 默认只编译 Jazzy 常用主场景所需节点，减少首次构建和增量构建时间。
+- `demo_cpp/` 下的课程示例节点默认不参与编译。
+- `BUILD_TESTING` 默认关闭，避免本地构建时额外配置 lint/test 目标。
+
+如果你需要课程配套 demo 节点，再显式打开它们:
+```
+cd ~/ros2_ws
+colcon build --symlink-install --cmake-args -DWPR_BUILD_TUTORIAL_DEMOS=ON
+```
+
+如果你只是反复修改这个包，建议这样编译，会更快一些:
+```
+cd ~/ros2_ws
+colcon build --symlink-install --packages-select wpr_simulation2
+```
+
+如果你只跑简单场景，还想进一步缩短构建时间，可以关闭点云节点或运行资源安装:
+```
+cd ~/ros2_ws
+colcon build --symlink-install --packages-select wpr_simulation2 --cmake-args -DWPR_BUILD_POINTCLOUD_TOOLS=OFF
+colcon build --symlink-install --packages-select wpr_simulation2 --cmake-args -DWPR_INSTALL_RUNTIME_ASSETS=OFF
+```
+
+需要重新打开测试和 lint 时:
+```
+cd ~/ros2_ws
+colcon build --symlink-install --packages-select wpr_simulation2 --cmake-args -DBUILD_TESTING=ON
+```
+
 简单场景:
 ```
 ros2 launch wpr_simulation2 wpb_simple.launch.py 
