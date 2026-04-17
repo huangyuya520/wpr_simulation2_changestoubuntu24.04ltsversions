@@ -1,11 +1,32 @@
 #!/usr/bin/env python3
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler
+from launch.actions import DeclareLaunchArgument, LogInfo, RegisterEventHandler, Shutdown, TimerAction
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+
+
+def _continue_on_success(success_actions, process_label):
+    def _handler(event, _context):
+        if event.returncode == 0:
+            return [
+                LogInfo(msg=f"[wpr_simulation2] {process_label} completed successfully."),
+                *success_actions,
+            ]
+
+        return [
+            LogInfo(
+                msg=(
+                    f"[wpr_simulation2] {process_label} failed with exit code "
+                    f"{event.returncode}. Stopping remaining startup actions."
+                )
+            ),
+            Shutdown(reason=f"{process_label} failed"),
+        ]
+
+    return _handler
 
 
 def generate_launch_description():
@@ -14,6 +35,7 @@ def generate_launch_description():
     pose_x = LaunchConfiguration("pose_x")
     pose_y = LaunchConfiguration("pose_y")
     pose_theta = LaunchConfiguration("pose_theta")
+    spawn_delay = LaunchConfiguration("spawn_delay")
 
     robot_description_content = Command(
         [
@@ -90,14 +112,16 @@ def generate_launch_description():
             DeclareLaunchArgument("pose_x", default_value="0.0"),
             DeclareLaunchArgument("pose_y", default_value="0.0"),
             DeclareLaunchArgument("pose_theta", default_value="0.0"),
+            DeclareLaunchArgument("spawn_delay", default_value="3.0"),
             RegisterEventHandler(
                 event_handler=OnProcessExit(
                     target_action=spawn_robot,
-                    on_exit=[planar_move],
+                    on_exit=_continue_on_success([planar_move], "robot spawn"),
                 )
             ),
             bridge,
             robot_state_publisher,
-            spawn_robot,
+            # Give Gazebo a short warm-up window so model creation doesn't race the world startup.
+            TimerAction(period=spawn_delay, actions=[spawn_robot]),
         ]
     )

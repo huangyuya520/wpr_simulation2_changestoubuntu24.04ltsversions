@@ -42,6 +42,7 @@
 static float nMinHeight = 0.493;
 static float nMaxHeight = 1.036;
 static float nBottomHeight = 0.32;
+static constexpr int kActiveJointCount = 3;
 
 class WPB_Home_Mani_Sim_Node : public rclcpp::Node
 {
@@ -49,8 +50,8 @@ public:
     WPB_Home_Mani_Sim_Node() : Node("wpb_home_mani_node")
     {
         // 初始化关节控制消息包
-        pub_msg_.data.resize(6);
-        for(int i=0;i<6;i++)
+        pub_msg_.data.resize(kActiveJointCount);
+        for(int i=0;i<kActiveJointCount;i++)
         {
             pub_msg_.data[i] = 0;
             target_position_[i] = 0;
@@ -77,9 +78,6 @@ public:
     {
         float fGripperAngle = asin((inGripperValue - 0.025)*5);
         target_position_[2] = fGripperAngle;
-        target_position_[3] = -fGripperAngle;
-        target_position_[4] = -fGripperAngle;
-        target_position_[5] = fGripperAngle;
     }
     void ManiHeight(float inHeight)
     {
@@ -115,7 +113,7 @@ public:
             pub_msg_.data[1] += 0.012;
         if(target_position_[1] < pub_msg_.data[1])
             pub_msg_.data[1] -= 0.012;
-        for(int i=2;i<6;i++)
+        for(int i=2;i<kActiveJointCount;i++)
         {
             if(target_position_[i] > pub_msg_.data[i])
                 pub_msg_.data[i] += 0.02;
@@ -152,7 +150,7 @@ private:
     rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr publisher_;
     std_msgs::msg::Float64MultiArray pub_msg_;
     rclcpp::TimerBase::SharedPtr timer_;
-    float target_position_[6];
+    float target_position_[kActiveJointCount];
 };
 
 int main(int argc, char** argv)

@@ -10,6 +10,9 @@ from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
+WORLD_READY_DELAY = 4.0
+SCENE_OBJECT_DELAY = 6.0
+
 
 def spawn_model(relative_path, entity_name, x, y, z=0.0, yaw=0.0):
     return Node(
@@ -51,7 +54,8 @@ def generate_launch_description():
             PathJoinSubstitution(
                 [FindPackageShare("wpr_simulation2"), "launch", "spawn_wpb_mani.launch.py"]
             )
-        )
+        ),
+        launch_arguments={"spawn_delay": str(WORLD_READY_DELAY)}.items(),
     )
 
     spawn_table = spawn_model(("models", "table.model"), "table", 1.2, 0.0)
@@ -86,7 +90,10 @@ def generate_launch_description():
         [
             world,
             spawn_robot,
-            TimerAction(period=2.0, actions=[spawn_table, spawn_red_bottle, spawn_green_bottle]),
+            TimerAction(
+                period=SCENE_OBJECT_DELAY,
+                actions=[spawn_table, spawn_red_bottle, spawn_green_bottle],
+            ),
             objects_publisher,
             rviz,
         ]

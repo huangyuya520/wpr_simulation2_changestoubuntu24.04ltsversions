@@ -29,6 +29,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -87,7 +88,7 @@ if(WPR_BUILD_POINTCLOUD_TOOLS)
 
   add_executable(objects_publisher src/objects_publisher.cpp)
   ament_target_dependencies(objects_publisher
-  "rclcpp" "sensor_msgs" "pcl_conversions" "pcl_ros" "std_msgs" "tf2_ros" "visualization_msgs"
+  "nav_msgs" "rclcpp" "sensor_msgs" "pcl_conversions" "pcl_ros" "std_msgs" "tf2_ros" "visualization_msgs"
   )
   target_link_libraries(objects_publisher "${cpp_typesupport_target}")
 endif()
@@ -254,6 +255,7 @@ install(DIRECTORY ${wpr_share_directories}
 # Install Python executables
 install(PROGRAMS
   src/face_detector.py
+  src/ensure_controller_active.py
   src/gz_planar_move.py
   DESTINATION lib/${PROJECT_NAME}
 )

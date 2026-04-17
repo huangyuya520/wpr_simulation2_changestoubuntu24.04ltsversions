@@ -1,20 +1,50 @@
 #!/usr/bin/env python3
 
+from pathlib import Path
+
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, LogInfo, RegisterEventHandler, Shutdown, TimerAction
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 
+def _continue_on_success(success_actions, process_label, shutdown_on_failure=True):
+    def _handler(event, _context):
+        if event.returncode == 0:
+            return [
+                LogInfo(msg=f"[wpr_simulation2] {process_label} completed successfully."),
+                *success_actions,
+            ]
+
+        failure_actions = [
+            LogInfo(
+                msg=(
+                    f"[wpr_simulation2] {process_label} failed with exit code "
+                    f"{event.returncode}. Stopping remaining startup actions."
+                )
+            ),
+        ]
+        if shutdown_on_failure:
+            failure_actions.append(Shutdown(reason=f"{process_label} failed"))
+
+        return failure_actions
+
+    return _handler
+
+
 def generate_launch_description():
     pose_x = LaunchConfiguration("pose_x")
     pose_y = LaunchConfiguration("pose_y")
     pose_theta = LaunchConfiguration("pose_theta")
+    spawn_delay = LaunchConfiguration("spawn_delay")
+    controller_delay = LaunchConfiguration("controller_delay")
+    manipulator_delay = LaunchConfiguration("manipulator_delay")
     controller_params = PathJoinSubstitution(
         [FindPackageShare("wpr_simulation2"), "config", "wpb_home_controller.yaml"]
     )
+    helper_script = Path(__file__).resolve().parents[1] / "src" / "ensure_controller_active.py"
 
     robot_description_content = Command(
         [
@@ -84,17 +114,27 @@ def generate_launch_description():
         ],
     )
 
-    joint_state_broadcaster_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["joint_state_broadcaster"],
+    joint_state_broadcaster_ensure = ExecuteProcess(
+        cmd=[
+            FindExecutable(name="python3"),
+            str(helper_script),
+            "--controller-name",
+            "joint_state_broadcaster",
+            "--timeout-sec",
+            "60.0",
+        ],
         output="screen",
     )
 
-    manipulator_controller_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["manipulator_controller", "--param-file", controller_params],
+    manipulator_controller_ensure = ExecuteProcess(
+        cmd=[
+            FindExecutable(name="python3"),
+            str(helper_script),
+            "--controller-name",
+            "manipulator_controller",
+            "--timeout-sec",
+            "60.0",
+        ],
         output="screen",
     )
 
@@ -111,26 +151,41 @@ def generate_launch_description():
             DeclareLaunchArgument("pose_x", default_value="0.0"),
             DeclareLaunchArgument("pose_y", default_value="0.0"),
             DeclareLaunchArgument("pose_theta", default_value="0.0"),
+            DeclareLaunchArgument("spawn_delay", default_value="3.0"),
+            DeclareLaunchArgument("controller_delay", default_value="2.0"),
+            DeclareLaunchArgument("manipulator_delay", default_value="5.0"),
             RegisterEventHandler(
                 event_handler=OnProcessExit(
                     target_action=spawn_robot,
-                    on_exit=[planar_move, joint_state_broadcaster_spawner],
+                    on_exit=_continue_on_success(
+                        [
+                            planar_move,
+                            TimerAction(
+                                period=controller_delay,
+                                actions=[joint_state_broadcaster_ensure],
+                            ),
+                            TimerAction(
+                                period=manipulator_delay,
+                                actions=[manipulator_controller_ensure],
+                            ),
+                        ],
+                        "robot spawn",
+                    ),
                 )
             ),
             RegisterEventHandler(
                 event_handler=OnProcessExit(
-                    target_action=joint_state_broadcaster_spawner,
-                    on_exit=[manipulator_controller_spawner],
-                )
-            ),
-            RegisterEventHandler(
-                event_handler=OnProcessExit(
-                    target_action=manipulator_controller_spawner,
-                    on_exit=[wpb_home_mani_sim],
+                    target_action=manipulator_controller_ensure,
+                    on_exit=_continue_on_success(
+                        [wpb_home_mani_sim],
+                        "manipulator controller activation",
+                        shutdown_on_failure=False,
+                    ),
                 )
             ),
             bridge,
             robot_state_publisher,
-            spawn_robot,
+            # Give Gazebo a short warm-up window so model creation doesn't race the world startup.
+            TimerAction(period=spawn_delay, actions=[spawn_robot]),
         ]
     )

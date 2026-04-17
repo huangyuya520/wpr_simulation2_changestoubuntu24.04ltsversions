@@ -191,7 +191,8 @@
   </collision>
    <inertial>
       <mass value="0.95"/>
-      <inertia ixx="0.121862813" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.121862813"/> 
+      <!-- Use a positive-definite box inertia so Gazebo accepts the link for ros2_control. -->
+      <inertia ixx="0.000269167" ixy="0.0" ixz="0.0" iyy="0.009769167" iyz="0.0" izz="0.009895833"/>
   </inertial>
 </link>
 <joint name="elbow_forearm" type="revolute">
@@ -219,7 +220,7 @@
     </collision>
     <inertial>
       <mass value="0.1"/>
-      <inertia ixx="0.001" ixy="0.0" ixz="0.001" iyy="0.0" iyz="0.0" izz="0.001"/>
+      <inertia ixx="0.000012242" ixy="0.0" ixz="0.0" iyy="0.000094742" iyz="0.0" izz="0.000084167"/>
     </inertial>
   </link>
   <gazebo reference="mani_left_finger">
@@ -262,7 +263,7 @@
   </collision>
     <inertial>
       <mass value="0.1"/>
-      <inertia ixx="0.001" ixy="0.0" ixz="0.001" iyy="0.0" iyz="0.0" izz="0.001"/>
+      <inertia ixx="0.000005508" ixy="0.0" ixz="0.0" iyy="0.000046042" iyz="0.0" izz="0.000041133"/>
     </inertial>
   </link>
   <gazebo reference="mani_left_finger_tip">
@@ -300,7 +301,7 @@
     </collision>
     <inertial>
       <mass value="0.1"/>
-      <inertia ixx="0.001" ixy="0.0" ixz="0.001" iyy="0.0" iyz="0.0" izz="0.001"/>
+      <inertia ixx="0.000012242" ixy="0.0" ixz="0.0" iyy="0.000094742" iyz="0.0" izz="0.000084167"/>
     </inertial>
   </link>
   <gazebo reference="mani_right_finger">
@@ -344,7 +345,7 @@
   </collision>
     <inertial>
       <mass value="0.1"/>
-      <inertia ixx="0.001" ixy="0.0" ixz="0.001" iyy="0.0" iyz="0.0" izz="0.001"/>
+      <inertia ixx="0.000005508" ixy="0.0" ixz="0.0" iyy="0.000046042" iyz="0.0" izz="0.000041133"/>
     </inertial>
   </link>
   <gazebo reference="mani_right_finger_tip">
@@ -509,7 +510,7 @@
 </joint>
 
 <!-- Gazebo plugin for Kinect v2 -->
-<gazebo reference="kinect2_head_frame">
+<gazebo reference="kinect2_ir_optical_frame">
   <sensor type="rgbd_camera" name="kinect2_depth_sensor" >
     <topic>/kinect2/sd</topic>
     <always_on>true</always_on>
@@ -661,29 +662,17 @@
           <param name="initial_value">0.0</param>
         </state_interface>
     </joint>
-    <joint name="left_finger_tip">
-        <command_interface name="position">
-            <param name="min">-3.1416</param>
-            <param name="max">3.1416</param>
-        </command_interface>
+    <joint name="left_finger_tip" mimic="true">
         <state_interface name="position" >
           <param name="initial_value">0.0</param>
         </state_interface>
     </joint>
-    <joint name="palm_right_finger">
-        <command_interface name="position">
-            <param name="min">-3.1416</param>
-            <param name="max">3.1416</param>
-        </command_interface>
+    <joint name="palm_right_finger" mimic="true">
         <state_interface name="position" >
           <param name="initial_value">0.0</param>
         </state_interface>
     </joint>
-    <joint name="right_finger_tip">
-        <command_interface name="position">
-            <param name="min">-3.1416</param>
-            <param name="max">3.1416</param>
-        </command_interface>
+    <joint name="right_finger_tip" mimic="true">
         <state_interface name="position" >
           <param name="initial_value">0.0</param>
         </state_interface>

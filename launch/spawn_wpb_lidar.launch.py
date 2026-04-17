@@ -20,6 +20,7 @@ def generate_launch_description():
             DeclareLaunchArgument("pose_x", default_value="0.0"),
             DeclareLaunchArgument("pose_y", default_value="0.0"),
             DeclareLaunchArgument("pose_theta", default_value="0.0"),
+            DeclareLaunchArgument("spawn_delay", default_value="3.0"),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     PathJoinSubstitution(
@@ -36,6 +37,7 @@ def generate_launch_description():
                     "pose_x": LaunchConfiguration("pose_x"),
                     "pose_y": LaunchConfiguration("pose_y"),
                     "pose_theta": LaunchConfiguration("pose_theta"),
+                    "spawn_delay": LaunchConfiguration("spawn_delay"),
                 }.items(),
             ),
         ]

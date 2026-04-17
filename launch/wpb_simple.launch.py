@@ -7,6 +7,9 @@ from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
+WORLD_READY_DELAY = 4.0
+SCENE_OBJECT_DELAY = 6.0
+
 
 def generate_launch_description():
     world = IncludeLaunchDescription(
@@ -25,7 +28,8 @@ def generate_launch_description():
             PathJoinSubstitution(
                 [FindPackageShare("wpr_simulation2"), "launch", "spawn_wpb_lidar.launch.py"]
             )
-        )
+        ),
+        launch_arguments={"spawn_delay": str(WORLD_READY_DELAY)}.items(),
     )
 
     spawn_bookshelft = Node(
@@ -51,6 +55,6 @@ def generate_launch_description():
         [
             world,
             spawn_robot,
-            TimerAction(period=2.0, actions=[spawn_bookshelft]),
+            TimerAction(period=SCENE_OBJECT_DELAY, actions=[spawn_bookshelft]),
         ]
     )

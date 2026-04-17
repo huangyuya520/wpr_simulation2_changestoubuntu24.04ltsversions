@@ -10,6 +10,10 @@ from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
+WORLD_READY_DELAY = 4.0
+BALL_SPAWN_DELAY = 6.0
+BALL_BEHAVIOR_DELAY = 7.0
+
 
 def spawn_ball(entity_name, x, y):
     return Node(
@@ -87,7 +91,8 @@ def generate_launch_description():
     spawn_robot = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([FindPackageShare("wpr_simulation2"), "launch", "spawn_wpb.launch.py"])
-        )
+        ),
+        launch_arguments={"spawn_delay": str(WORLD_READY_DELAY)}.items(),
     )
 
     spawn_orange_ball = spawn_ball("orange_ball", 2.0, 0.0)
@@ -110,7 +115,7 @@ def generate_launch_description():
             world,
             spawn_robot,
             TimerAction(
-                period=2.0,
+                period=BALL_SPAWN_DELAY,
                 actions=[
                     spawn_orange_ball,
                     spawn_red_ball,
@@ -119,7 +124,7 @@ def generate_launch_description():
                 ],
             ),
             TimerAction(
-                period=3.0,
+                period=BALL_BEHAVIOR_DELAY,
                 actions=[
                     orange_planar_move,
                     red_planar_move,

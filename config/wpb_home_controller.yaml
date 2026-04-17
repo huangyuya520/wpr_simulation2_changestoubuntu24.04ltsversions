@@ -15,7 +15,4 @@ manipulator_controller:
       - mani_base
       - elbow_forearm
       - palm_left_finger
-      - left_finger_tip
-      - palm_right_finger
-      - right_finger_tip
     interface_name: position

@@ -10,6 +10,9 @@ from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
+WORLD_READY_DELAY = 4.0
+SCENE_OBJECT_DELAY = 6.0
+
 
 def generate_launch_description():
     world = IncludeLaunchDescription(
@@ -33,6 +36,7 @@ def generate_launch_description():
             "pose_x": "0.0",
             "pose_y": "0.0",
             "pose_theta": "3.1415926",
+            "spawn_delay": str(WORLD_READY_DELAY),
         }.items(),
     )
 
@@ -63,6 +67,6 @@ def generate_launch_description():
         [
             world,
             spawn_robot,
-            TimerAction(period=2.0, actions=[spawn_kai]),
+            TimerAction(period=SCENE_OBJECT_DELAY, actions=[spawn_kai]),
         ]
     )
